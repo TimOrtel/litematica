@@ -321,7 +321,7 @@ public class SchematicProject
             String fileName = this.getNextFileName();
 
             AreaSelection selection = this.getSelection();
-            LitematicaSchematic schematic = LitematicaSchematic.createEmptySchematic(selection, author);
+            LitematicaSchematic schematic = LitematicaSchematic.createEmptySchematic(selection, author, true);
             schematic.getMetadata().setName(name);
             BlockPos areaOffset = selection.getEffectiveOrigin().subtract(this.origin);
             SaveCompletionListener listener = new SaveCompletionListener(name, fileName, areaOffset);

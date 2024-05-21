@@ -17,6 +17,8 @@ import fi.dy.masa.malilib.util.FileUtils;
 import fi.dy.masa.malilib.util.KeyCodes;
 import fi.dy.masa.malilib.util.StringUtils;
 
+import java.io.File;
+
 public abstract class GuiSchematicSaveBase extends GuiSchematicBrowserBase implements ISelectionListener<DirectoryEntry>
 {
     protected GuiTextFieldGeneric textField;
@@ -79,6 +81,17 @@ public abstract class GuiSchematicSaveBase extends GuiSchematicBrowserBase imple
                 this.setTextFieldText(this.defaultText);
             }
         }
+
+        String actualText = getTextFieldText();
+
+        File dir = getListWidget().getCurrentDirectory();
+        int i = 1;
+        while (new File(dir, actualText + LitematicaSchematic.FILE_EXTENSION).exists()) {
+            actualText = getTextFieldText() + "_" + i;
+            i++;
+        }
+
+        setTextFieldText(actualText);
 
         int x = this.textField.getX() + this.textField.getWidth() + 4;
         int y = 28;

@@ -1,5 +1,9 @@
 package fi.dy.masa.litematica.event;
 
+import fi.dy.masa.litematica.scheduler.TaskScheduler;
+import fi.dy.masa.litematica.scheduler.tasks.TaskBase;
+import fi.dy.masa.malilib.interfaces.IStringConsumer;
+import fi.dy.masa.malilib.interfaces.IStringConsumerFeedback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
@@ -47,10 +51,8 @@ import fi.dy.masa.malilib.interfaces.IValueChangeCallback;
 import fi.dy.masa.malilib.util.InfoUtils;
 import fi.dy.masa.malilib.util.LayerMode;
 
-public class KeyCallbacks
-{
-    public static void init(MinecraftClient mc)
-    {
+public class KeyCallbacks {
+    public static void init(MinecraftClient mc) {
         IHotkeyCallback callbackHotkeys = new KeyCallbackHotkeys(mc);
         IHotkeyCallback callbackMessage = new KeyCallbackToggleMessage(mc);
         ValueChangeCallback valueChangeCallback = new ValueChangeCallback();
@@ -118,32 +120,25 @@ public class KeyCallbacks
         Hotkeys.TOOL_ENABLED_TOGGLE.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(Configs.Generic.TOOL_ITEM_ENABLED));
     }
 
-    private static class ValueChangeCallback implements IValueChangeCallback<ConfigString>
-    {
+    private static class ValueChangeCallback implements IValueChangeCallback<ConfigString> {
         @Override
-        public void onValueChanged(ConfigString config)
-        {
-            if (config == Configs.Generic.PICK_BLOCKABLE_SLOTS)
-            {
+        public void onValueChanged(ConfigString config) {
+            if (config == Configs.Generic.PICK_BLOCKABLE_SLOTS) {
                 InventoryUtils.setPickBlockableSlots(Configs.Generic.PICK_BLOCKABLE_SLOTS.getStringValue());
             }
         }
     }
 
-    private static class RenderToggle extends KeyCallbackToggleBooleanConfigWithMessage
-    {
-        public RenderToggle(IConfigBoolean config)
-        {
+    private static class RenderToggle extends KeyCallbackToggleBooleanConfigWithMessage {
+        public RenderToggle(IConfigBoolean config) {
             super(config);
         }
 
         @Override
-        public boolean onKeyAction(KeyAction action, IKeybind key)
-        {
+        public boolean onKeyAction(KeyAction action, IKeybind key) {
             super.onKeyAction(action, key);
 
-            if (this.config.getBooleanValue())
-            {
+            if (this.config.getBooleanValue()) {
                 SchematicWorldRefresher.INSTANCE.updateAll();
             }
 
@@ -151,20 +146,16 @@ public class KeyCallbacks
         }
     }
 
-    private static class KeyCallbackHotkeys implements IHotkeyCallback
-    {
+    private static class KeyCallbackHotkeys implements IHotkeyCallback {
         private final MinecraftClient mc;
 
-        public KeyCallbackHotkeys(MinecraftClient mc)
-        {
+        public KeyCallbackHotkeys(MinecraftClient mc) {
             this.mc = mc;
         }
 
         @Override
-        public boolean onKeyAction(KeyAction action, IKeybind key)
-        {
-            if (this.mc.player == null || this.mc.world == null)
-            {
+        public boolean onKeyAction(KeyAction action, IKeybind key) {
+            if (this.mc.player == null || this.mc.world == null) {
                 return false;
             }
 
@@ -176,85 +167,59 @@ public class KeyCallbacks
             boolean isToolSecondary = key == Hotkeys.TOOL_PLACE_CORNER_2.getKeybind();
             boolean isToolSelect = key == Hotkeys.TOOL_SELECT_ELEMENTS.getKeybind();
 
-            if (toolEnabled && isToolSelect)
-            {
-                if (mode.getUsesBlockPrimary() && Hotkeys.TOOL_SELECT_MODIFIER_BLOCK_1.getKeybind().isKeybindHeld())
-                {
+            if (toolEnabled && isToolSelect) {
+                if (mode.getUsesBlockPrimary() && Hotkeys.TOOL_SELECT_MODIFIER_BLOCK_1.getKeybind().isKeybindHeld()) {
                     WorldUtils.setToolModeBlockState(mode, true, this.mc);
                     return true;
-                }
-                else if (mode.getUsesBlockSecondary() && Hotkeys.TOOL_SELECT_MODIFIER_BLOCK_2.getKeybind().isKeybindHeld())
-                {
+                } else if (mode.getUsesBlockSecondary() && Hotkeys.TOOL_SELECT_MODIFIER_BLOCK_2.getKeybind().isKeybindHeld()) {
                     WorldUtils.setToolModeBlockState(mode, false, this.mc);
                     return true;
                 }
             }
 
-            if (toolEnabled && hasTool)
-            {
+            if (toolEnabled && hasTool) {
                 int maxDistance = 200;
-                boolean projectMode =  DataManager.getSchematicProjectsManager().hasProjectOpen();
+                boolean projectMode = DataManager.getSchematicProjectsManager().hasProjectOpen();
 
-                if (isToolPrimary || isToolSecondary)
-                {
-                    if (mode.getUsesAreaSelection() || projectMode)
-                    {
+                if (isToolPrimary || isToolSecondary) {
+                    if (mode.getUsesAreaSelection() || projectMode) {
                         SelectionManager sm = DataManager.getSelectionManager();
                         boolean grabModifier = Hotkeys.SELECTION_GRAB_MODIFIER.getKeybind().isKeybindHeld();
                         boolean moveEverything = grabModifier;
 
-                        if (grabModifier && mode == ToolMode.MOVE)
-                        {
+                        if (grabModifier && mode == ToolMode.MOVE) {
                             Entity entity = fi.dy.masa.malilib.util.EntityUtils.getCameraEntity();
                             BlockPos pos = RayTraceUtils.getTargetedPosition(this.mc.world, entity, maxDistance, false);
 
-                            if (pos != null)
-                            {
+                            if (pos != null) {
                                 SchematicUtils.moveCurrentlySelectedWorldRegionTo(pos, this.mc);
                             }
-                        }
-                        else if (Configs.Generic.SELECTION_CORNERS_MODE.getOptionListValue() == CornerSelectionMode.CORNERS)
-                        {
+                        } else if (Configs.Generic.SELECTION_CORNERS_MODE.getOptionListValue() == CornerSelectionMode.CORNERS) {
                             Corner corner = isToolPrimary ? Corner.CORNER_1 : Corner.CORNER_2;
                             sm.setPositionOfCurrentSelectionToRayTrace(this.mc, corner, moveEverything, maxDistance);
-                        }
-                        else if (Configs.Generic.SELECTION_CORNERS_MODE.getOptionListValue() == CornerSelectionMode.EXPAND)
-                        {
+                        } else if (Configs.Generic.SELECTION_CORNERS_MODE.getOptionListValue() == CornerSelectionMode.EXPAND) {
                             sm.handleCuboidModeMouseClick(this.mc, maxDistance, isToolSecondary, moveEverything);
                         }
-                    }
-                    else if (mode.getUsesSchematic())
-                    {
+                    } else if (mode.getUsesSchematic()) {
                         DataManager.getSchematicPlacementManager().setPositionOfCurrentSelectionToRayTrace(this.mc, maxDistance);
                     }
 
                     return true;
-                }
-                else if (isToolSelect)
-                {
-                    if (mode.getUsesAreaSelection() || projectMode)
-                    {
+                } else if (isToolSelect) {
+                    if (mode.getUsesAreaSelection() || projectMode) {
                         SelectionManager sm = DataManager.getSelectionManager();
 
-                        if (Hotkeys.SELECTION_GRAB_MODIFIER.getKeybind().isKeybindHeld())
-                        {
-                            if (sm.hasGrabbedElement())
-                            {
+                        if (Hotkeys.SELECTION_GRAB_MODIFIER.getKeybind().isKeybindHeld()) {
+                            if (sm.hasGrabbedElement()) {
                                 sm.releaseGrabbedElement();
-                            }
-                            else
-                            {
+                            } else {
                                 sm.grabElement(this.mc, maxDistance);
                             }
-                        }
-                        else
-                        {
+                        } else {
                             Entity entity = fi.dy.masa.malilib.util.EntityUtils.getCameraEntity();
                             sm.changeSelection(this.mc.world, entity, maxDistance);
                         }
-                    }
-                    else if (mode.getUsesSchematic())
-                    {
+                    } else if (mode.getUsesSchematic()) {
                         Entity entity = fi.dy.masa.malilib.util.EntityUtils.getCameraEntity();
                         DataManager.getSchematicPlacementManager().changeSelection(this.mc.world, entity, maxDistance);
                     }
@@ -263,274 +228,190 @@ public class KeyCallbacks
                 }
             }
 
-            if (key == Hotkeys.EASY_PLACE_ACTIVATION.getKeybind())
-            {
+            if (key == Hotkeys.EASY_PLACE_ACTIVATION.getKeybind()) {
                 return WorldUtils.handleEasyPlace(this.mc);
-            }
-            else if (key == Hotkeys.OPEN_GUI_MAIN_MENU.getKeybind())
-            {
+            } else if (key == Hotkeys.OPEN_GUI_MAIN_MENU.getKeybind()) {
                 GuiBase.openGui(new GuiMainMenu());
                 return true;
-            }
-            else if (key == Hotkeys.OPEN_GUI_LOADED_SCHEMATICS.getKeybind())
-            {
+            } else if (key == Hotkeys.OPEN_GUI_LOADED_SCHEMATICS.getKeybind()) {
                 GuiBase.openGui(new GuiSchematicLoadedList());
                 return true;
-            }
-            else if (key == Hotkeys.OPEN_GUI_SELECTION_MANAGER.getKeybind())
-            {
-                if (DataManager.getSchematicProjectsManager().hasProjectOpen() == false)
-                {
+            } else if (key == Hotkeys.OPEN_GUI_SELECTION_MANAGER.getKeybind()) {
+                if (DataManager.getSchematicProjectsManager().hasProjectOpen() == false) {
                     GuiBase.openGui(new GuiAreaSelectionManager());
-                }
-                else
-                {
+                } else {
                     InfoUtils.showGuiOrInGameMessage(MessageType.WARNING, "litematica.gui.button.hover.schematic_projects.area_browser_disabled_currently_in_projects_mode");
                 }
 
                 return true;
-            }
-            else if (key == Hotkeys.OPEN_GUI_SCHEMATIC_PLACEMENTS.getKeybind())
-            {
+            } else if (key == Hotkeys.OPEN_GUI_SCHEMATIC_PLACEMENTS.getKeybind()) {
                 GuiBase.openGui(new GuiSchematicPlacementsList());
                 return true;
-            }
-            else if (key == Hotkeys.OPEN_GUI_SCHEMATIC_PROJECTS.getKeybind())
-            {
+            } else if (key == Hotkeys.OPEN_GUI_SCHEMATIC_PROJECTS.getKeybind()) {
                 DataManager.getSchematicProjectsManager().openSchematicProjectsGui();
                 return true;
-            }
-            else if (key == Hotkeys.OPEN_GUI_SETTINGS.getKeybind())
-            {
-                if (DataManager.getConfigGuiTab() == ConfigGuiTab.RENDER_LAYERS)
-                {
+            } else if (key == Hotkeys.OPEN_GUI_SETTINGS.getKeybind()) {
+                if (DataManager.getConfigGuiTab() == ConfigGuiTab.RENDER_LAYERS) {
                     GuiBase.openGui(new GuiRenderLayer());
-                }
-                else
-                {
+                } else {
                     GuiBase.openGui(new GuiConfigs());
                 }
 
                 return true;
-            }
-            else if (key == Hotkeys.OPEN_GUI_PLACEMENT_SETTINGS.getKeybind())
-            {
+            } else if (key == Hotkeys.OPEN_GUI_PLACEMENT_SETTINGS.getKeybind()) {
                 SchematicPlacement schematicPlacement = DataManager.getSchematicPlacementManager().getSelectedSchematicPlacement();
 
-                if (schematicPlacement != null)
-                {
+                if (schematicPlacement != null) {
                     SubRegionPlacement placement = schematicPlacement.getSelectedSubRegionPlacement();
 
-                    if (placement != null)
-                    {
+                    if (placement != null) {
                         GuiBase.openGui(new GuiSubRegionConfiguration(schematicPlacement, placement));
-                    }
-                    else
-                    {
+                    } else {
                         GuiBase.openGui(new GuiPlacementConfiguration(schematicPlacement));
                     }
-                }
-                else
-                {
+                } else {
                     InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.message.error.no_placement_selected");
                 }
 
                 return true;
-            }
-            else if (key == Hotkeys.OPEN_GUI_SCHEMATIC_VERIFIER.getKeybind())
-            {
+            } else if (key == Hotkeys.OPEN_GUI_SCHEMATIC_VERIFIER.getKeybind()) {
                 SchematicPlacement schematicPlacement = DataManager.getSchematicPlacementManager().getSelectedSchematicPlacement();
 
-                if (schematicPlacement != null)
-                {
+                if (schematicPlacement != null) {
                     GuiBase.openGui(new GuiSchematicVerifier(schematicPlacement));
-                }
-                else
-                {
+                } else {
                     InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.message.error.no_placement_selected");
                 }
 
                 return true;
-            }
-            else if (key == Hotkeys.OPEN_GUI_MATERIAL_LIST.getKeybind())
-            {
+            } else if (key == Hotkeys.OPEN_GUI_MATERIAL_LIST.getKeybind()) {
                 MaterialListBase materialList = DataManager.getMaterialList();
 
                 // No last-viewed material list currently stored, try to get one for the currently selected placement, if any
-                if (materialList == null)
-                {
+                if (materialList == null) {
                     SchematicPlacement schematicPlacement = DataManager.getSchematicPlacementManager().getSelectedSchematicPlacement();
 
-                    if (schematicPlacement != null)
-                    {
+                    if (schematicPlacement != null) {
                         materialList = schematicPlacement.getMaterialList();
                         materialList.reCreateMaterialList();
-                    }
-                    else
-                    {
+                    } else {
                         InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.message.error.no_placement_selected");
                     }
                 }
 
-                if (materialList != null)
-                {
+                if (materialList != null) {
                     GuiBase.openGui(new GuiMaterialList(materialList));
                 }
 
                 return true;
-            }
-            else if (key == Hotkeys.OPEN_GUI_AREA_SETTINGS.getKeybind())
-            {
+            } else if (key == Hotkeys.OPEN_GUI_AREA_SETTINGS.getKeybind()) {
                 SelectionManager manager = DataManager.getSelectionManager();
 
-                if (manager.getCurrentSelection() != null)
-                {
+                if (manager.getCurrentSelection() != null) {
                     manager.openEditGui(null);
-                }
-                else
-                {
+                } else {
                     InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.message.error.no_area_selected");
                 }
 
                 return true;
-            }
-            else if (key == Hotkeys.RERENDER_SCHEMATIC.getKeybind())
-            {
+            } else if (key == Hotkeys.RERENDER_SCHEMATIC.getKeybind()) {
                 SchematicWorldRefresher.INSTANCE.updateAll();
                 InfoUtils.printActionbarMessage("litematica.message.schematic_rendering_refreshed");
                 return true;
-            }
-            else if (key == Hotkeys.LAYER_NEXT.getKeybind())
-            {
+            } else if (key == Hotkeys.LAYER_NEXT.getKeybind()) {
                 DataManager.getRenderLayerRange().moveLayer(1);
                 return true;
-            }
-            else if (key == Hotkeys.LAYER_PREVIOUS.getKeybind())
-            {
+            } else if (key == Hotkeys.LAYER_PREVIOUS.getKeybind()) {
                 DataManager.getRenderLayerRange().moveLayer(-1);
                 return true;
-            }
-            else if (key == Hotkeys.LAYER_SET_HERE.getKeybind())
-            {
+            } else if (key == Hotkeys.LAYER_SET_HERE.getKeybind()) {
                 DataManager.getRenderLayerRange().setSingleBoundaryToPosition(fi.dy.masa.malilib.util.EntityUtils.getCameraEntity());
                 return true;
-            }
-            else if (key == Hotkeys.LAYER_MODE_NEXT.getKeybind())
-            {
+            } else if (key == Hotkeys.LAYER_MODE_NEXT.getKeybind()) {
                 DataManager.getRenderLayerRange().setLayerMode((LayerMode) DataManager.getRenderLayerRange().getLayerMode().cycle(true));
                 return true;
-            }
-            else if (key == Hotkeys.LAYER_MODE_PREVIOUS.getKeybind())
-            {
+            } else if (key == Hotkeys.LAYER_MODE_PREVIOUS.getKeybind()) {
                 DataManager.getRenderLayerRange().setLayerMode((LayerMode) DataManager.getRenderLayerRange().getLayerMode().cycle(false));
                 return true;
-            }
-            else if (key == Hotkeys.PICK_BLOCK_FIRST.getKeybind())
-            {
-                if (EntityUtils.shouldPickBlock(this.mc.player))
-                {
+            } else if (key == Hotkeys.PICK_BLOCK_FIRST.getKeybind()) {
+                if (EntityUtils.shouldPickBlock(this.mc.player)) {
                     return WorldUtils.doSchematicWorldPickBlock(true, this.mc);
                 }
 
                 return false;
-            }
-            else if (key == Hotkeys.PICK_BLOCK_LAST.getKeybind())
-            {
-                if (EntityUtils.shouldPickBlock(this.mc.player))
-                {
+            } else if (key == Hotkeys.PICK_BLOCK_LAST.getKeybind()) {
+                if (EntityUtils.shouldPickBlock(this.mc.player)) {
                     // Only do the pick block here, if it's not bound to the use button.
                     // If it's bound to the use button, then it will be done from the input handling.
-                    if (KeybindMulti.hotkeyMatchesKeybind(Hotkeys.PICK_BLOCK_LAST, this.mc.options.useKey) == false)
-                    {
+                    if (KeybindMulti.hotkeyMatchesKeybind(Hotkeys.PICK_BLOCK_LAST, this.mc.options.useKey) == false) {
                         WorldUtils.doSchematicWorldPickBlock(false, this.mc);
                     }
                 }
 
                 return false;
-            }
-            else if (key == Hotkeys.SAVE_AREA_AS_SCHEMATIC_TO_FILE.getKeybind())
-            {
-                return SchematicUtils.saveSchematic(false);
-            }
-            else if (key == Hotkeys.SAVE_AREA_AS_IN_MEMORY_SCHEMATIC.getKeybind())
-            {
+            } else if (key == Hotkeys.SAVE_AREA_AS_SCHEMATIC_TO_FILE.getKeybind()) {
+                var selection = DataManager.getSelectionManager().getCurrentSelection();
+                var schematic = SchematicUtils.quickSaveSchematic();
+                if (schematic == null) return true;
+
+                SchematicPlacement placement = SchematicPlacement.createFor(schematic, BlockPos.ORIGIN, schematic.getMetadata().getName(), true, true);
+                placement.moveSubRegionTo("content", selection.getSubRegionBox(selection.getCurrentSubRegionBoxName()).getPos1(), System.out::println);
+
+                DataManager.getSchematicPlacementManager().addSchematicPlacement(
+                        placement,
+                        false
+                );
+
+                return true;
+            } else if (key == Hotkeys.SAVE_AREA_AS_IN_MEMORY_SCHEMATIC.getKeybind()) {
                 return SchematicUtils.saveSchematic(true);
-            }
-            else if (key == Hotkeys.SCHEMATIC_VERSION_CYCLE_NEXT.getKeybind())
-            {
-                if (DataManager.getSchematicProjectsManager().hasProjectOpen())
-                {
+            } else if (key == Hotkeys.SCHEMATIC_VERSION_CYCLE_NEXT.getKeybind()) {
+                if (DataManager.getSchematicProjectsManager().hasProjectOpen()) {
                     DataManager.getSchematicProjectsManager().cycleVersion(1);
                 }
                 return true;
-            }
-            else if (key == Hotkeys.SCHEMATIC_VERSION_CYCLE_PREVIOUS.getKeybind())
-            {
-                if (DataManager.getSchematicProjectsManager().hasProjectOpen())
-                {
+            } else if (key == Hotkeys.SCHEMATIC_VERSION_CYCLE_PREVIOUS.getKeybind()) {
+                if (DataManager.getSchematicProjectsManager().hasProjectOpen()) {
                     DataManager.getSchematicProjectsManager().cycleVersion(-1);
                 }
                 return true;
-            }
-            else if (key == Hotkeys.CLONE_SELECTION.getKeybind())
-            {
+            } else if (key == Hotkeys.CLONE_SELECTION.getKeybind()) {
                 SchematicUtils.cloneSelectionArea(this.mc);
                 return true;
-            }
-            else if (key == Hotkeys.EXECUTE_OPERATION.getKeybind() && ((hasTool && toolEnabled) || Configs.Generic.EXECUTE_REQUIRE_TOOL.getBooleanValue() == false))
-            {
-                if (DataManager.getSchematicProjectsManager().hasProjectOpen())
-                {
+            } else if (key == Hotkeys.EXECUTE_OPERATION.getKeybind() && ((hasTool && toolEnabled) || Configs.Generic.EXECUTE_REQUIRE_TOOL.getBooleanValue() == false)) {
+                if (DataManager.getSchematicProjectsManager().hasProjectOpen()) {
                     DataManager.getSchematicProjectsManager().pasteCurrentVersionToWorld();
                     return true;
-                }
-                else if (mode == ToolMode.PASTE_SCHEMATIC)
-                {
+                } else if (mode == ToolMode.PASTE_SCHEMATIC) {
                     DataManager.getSchematicPlacementManager().pasteCurrentPlacementToWorld(this.mc);
                     return true;
-                }
-                else if (mode == ToolMode.FILL && mode.getPrimaryBlock() != null)
-                {
+                } else if (mode == ToolMode.FILL && mode.getPrimaryBlock() != null) {
                     ToolUtils.fillSelectionVolumes(this.mc, mode.getPrimaryBlock(), null);
                     return true;
-                }
-                else if (mode == ToolMode.REPLACE_BLOCK && mode.getPrimaryBlock() != null && mode.getSecondaryBlock() != null)
-                {
+                } else if (mode == ToolMode.REPLACE_BLOCK && mode.getPrimaryBlock() != null && mode.getSecondaryBlock() != null) {
                     ToolUtils.fillSelectionVolumes(this.mc, mode.getPrimaryBlock(), mode.getSecondaryBlock());
                     return true;
-                }
-                else if (mode == ToolMode.DELETE)
-                {
+                } else if (mode == ToolMode.DELETE) {
                     boolean removeEntities = true; // TODO
                     ToolUtils.deleteSelectionVolumes(removeEntities, this.mc);
                     return true;
                 }
-            }
-            else if (key == Hotkeys.NUDGE_SELECTION_NEGATIVE.getKeybind() ||
-                     key == Hotkeys.NUDGE_SELECTION_POSITIVE.getKeybind())
-            {
+            } else if (key == Hotkeys.NUDGE_SELECTION_NEGATIVE.getKeybind() ||
+                    key == Hotkeys.NUDGE_SELECTION_POSITIVE.getKeybind()) {
                 int amount = key == Hotkeys.NUDGE_SELECTION_POSITIVE.getKeybind() ? 1 : -1;
                 InputHandler.nudgeSelection(amount, mode, this.mc.player);
                 return true;
-            }
-            else if (key == Hotkeys.SELECTION_GROW_HOTKEY.getKeybind())
-            {
-                if (mode.getUsesAreaSelection())
-                {
+            } else if (key == Hotkeys.SELECTION_GROW_HOTKEY.getKeybind()) {
+                if (mode.getUsesAreaSelection()) {
                     PositionUtils.growOrShrinkCurrentSelection(true);
                     return true;
                 }
-            }
-            else if (key == Hotkeys.SELECTION_SHRINK_HOTKEY.getKeybind())
-            {
-                if (mode.getUsesAreaSelection())
-                {
+            } else if (key == Hotkeys.SELECTION_SHRINK_HOTKEY.getKeybind()) {
+                if (mode.getUsesAreaSelection()) {
                     PositionUtils.growOrShrinkCurrentSelection(false);
                     return true;
                 }
-            }
-            else if (key == Hotkeys.UNLOAD_CURRENT_SCHEMATIC.getKeybind())
-            {
+            } else if (key == Hotkeys.UNLOAD_CURRENT_SCHEMATIC.getKeybind()) {
                 SchematicUtils.unloadCurrentlySelectedSchematic();
                 return true;
             }
@@ -539,111 +420,78 @@ public class KeyCallbacks
         }
     }
 
-    private static class KeyCallbackToggleMessage implements IHotkeyCallback
-    {
+    private static class KeyCallbackToggleMessage implements IHotkeyCallback {
         private final MinecraftClient mc;
 
-        public KeyCallbackToggleMessage(MinecraftClient mc)
-        {
+        public KeyCallbackToggleMessage(MinecraftClient mc) {
             this.mc = mc;
         }
 
         @Override
-        public boolean onKeyAction(KeyAction action, IKeybind key)
-        {
+        public boolean onKeyAction(KeyAction action, IKeybind key) {
             ToolMode mode = DataManager.getToolMode();
 
-            if (key == Hotkeys.ADD_SELECTION_BOX.getKeybind())
-            {
-                if (mode.getUsesAreaSelection())
-                {
+            if (key == Hotkeys.ADD_SELECTION_BOX.getKeybind()) {
+                if (mode.getUsesAreaSelection()) {
                     return DataManager.getSelectionManager().createNewSubRegion(this.mc, true);
                 }
-            }
-            else if (key == Hotkeys.DELETE_SELECTION_BOX.getKeybind())
-            {
-                if (mode.getUsesAreaSelection())
-                {
+            } else if (key == Hotkeys.DELETE_SELECTION_BOX.getKeybind()) {
+                if (mode.getUsesAreaSelection()) {
                     SelectionManager sm = DataManager.getSelectionManager();
                     AreaSelection selection = sm.getCurrentSelection();
 
-                    if (selection != null)
-                    {
-                        if (selection.isOriginSelected())
-                        {
+                    if (selection != null) {
+                        if (selection.isOriginSelected()) {
                             selection.setExplicitOrigin(null);
                             selection.setOriginSelected(false);
                             InfoUtils.printActionbarMessage("litematica.message.removed_area_origin");
-                        }
-                        else
-                        {
+                        } else {
                             String name = selection.getCurrentSubRegionBoxName();
 
-                            if (name != null && selection.removeSelectedSubRegionBox())
-                            {
+                            if (name != null && selection.removeSelectedSubRegionBox()) {
                                 InfoUtils.printActionbarMessage("litematica.message.removed_selection_box", name);
                                 return true;
                             }
                         }
                     }
                 }
-            }
-            else if (key == Hotkeys.MOVE_ENTIRE_SELECTION.getKeybind())
-            {
-                if (mode.getUsesAreaSelection())
-                {
+            } else if (key == Hotkeys.MOVE_ENTIRE_SELECTION.getKeybind()) {
+                if (mode.getUsesAreaSelection()) {
                     SelectionManager sm = DataManager.getSelectionManager();
                     AreaSelection selection = sm.getCurrentSelection();
 
-                    if (selection != null)
-                    {
+                    if (selection != null) {
                         BlockPos pos = BlockPos.ofFloored(this.mc.player.getPos());
 
-                        if (mode == ToolMode.MOVE)
-                        {
+                        if (mode == ToolMode.MOVE) {
                             SchematicUtils.moveCurrentlySelectedWorldRegionTo(pos, this.mc);
-                        }
-                        else
-                        {
+                        } else {
                             selection.moveEntireSelectionTo(pos, true);
                         }
 
                         return true;
                     }
-                }
-                else if (mode.getUsesSchematic())
-                {
+                } else if (mode.getUsesSchematic()) {
                     BlockPos pos = BlockPos.ofFloored(this.mc.player.getPos());
                     DataManager.getSchematicPlacementManager().setPositionOfCurrentSelectionTo(pos, this.mc);
                     return true;
                 }
-            }
-            else if (key == Hotkeys.SELECTION_MODE_CYCLE.getKeybind())
-            {
-                if (mode == ToolMode.DELETE)
-                {
+            } else if (key == Hotkeys.SELECTION_MODE_CYCLE.getKeybind()) {
+                if (mode == ToolMode.DELETE) {
                     ToolModeData.DELETE.toggleUsePlacement();
-                }
-                else if (mode == ToolMode.PASTE_SCHEMATIC)
-                {
+                } else if (mode == ToolMode.PASTE_SCHEMATIC) {
                     Configs.Generic.PASTE_REPLACE_BEHAVIOR.setOptionListValue(Configs.Generic.PASTE_REPLACE_BEHAVIOR.getOptionListValue().cycle(false));
-                }
-                else if (mode.getUsesAreaSelection())
-                {
+                } else if (mode.getUsesAreaSelection()) {
                     Configs.Generic.SELECTION_CORNERS_MODE.setOptionListValue(Configs.Generic.SELECTION_CORNERS_MODE.getOptionListValue().cycle(false));
                 }
 
                 return true;
-            }
-            else if (key == Hotkeys.SET_AREA_ORIGIN.getKeybind())
-            {
-                if (mode.getUsesAreaSelection())
-                {
+            } else if (key == Hotkeys.SET_AREA_ORIGIN.getKeybind()) {
+                if (mode.getUsesAreaSelection()) {
                     SelectionManager sm = DataManager.getSelectionManager();
                     AreaSelection area = sm.getCurrentSelection();
 
-                    if (area != null)
-                    {
+                    if (area != null) {
                         BlockPos pos = BlockPos.ofFloored(this.mc.player.getPos());
                         area.setExplicitOrigin(pos);
                         String posStr = String.format("x: %d, y: %d, z: %d", pos.getX(), pos.getY(), pos.getZ());
@@ -651,17 +499,13 @@ public class KeyCallbacks
                         return true;
                     }
                 }
-            }
-            else if (key == Hotkeys.SET_SELECTION_BOX_POSITION_1.getKeybind() ||
-                     key == Hotkeys.SET_SELECTION_BOX_POSITION_2.getKeybind())
-            {
-                if (mode.getUsesAreaSelection())
-                {
+            } else if (key == Hotkeys.SET_SELECTION_BOX_POSITION_1.getKeybind() ||
+                    key == Hotkeys.SET_SELECTION_BOX_POSITION_2.getKeybind()) {
+                if (mode.getUsesAreaSelection()) {
                     SelectionManager sm = DataManager.getSelectionManager();
                     AreaSelection area = sm.getCurrentSelection();
 
-                    if (area != null && area.getSelectedSubRegionBox() != null)
-                    {
+                    if (area != null && area.getSelectedSubRegionBox() != null) {
                         BlockPos pos = BlockPos.ofFloored(this.mc.player.getPos());
                         Corner corner = key == Hotkeys.SET_SELECTION_BOX_POSITION_1.getKeybind() ? Corner.CORNER_1 : Corner.CORNER_2;
                         area.setSelectedSubRegionCornerPos(pos, corner);

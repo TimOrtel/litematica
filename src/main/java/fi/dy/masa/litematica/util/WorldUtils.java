@@ -965,7 +965,7 @@ public class WorldUtils
                     Chunk chunk = world.getChunk(cx, z >> 4);
                     int xMin = Math.max(x1,  cx << 4      );
                     int xMax = Math.min(x2, (cx << 4) + 15);
-                    int yMax = Math.min(y2, chunk.getHighestNonEmptySectionYOffset() + 15);
+                    @SuppressWarnings("removal") int yMax = Math.min(y2, chunk.getHighestNonEmptySectionYOffset() + 15);
 
                     for (int x = xMin; x <= xMax; ++x)
                     {
@@ -1000,6 +1000,7 @@ public class WorldUtils
                     {
                         Chunk chunk = world.getChunk(cx, cz);
 
+                        //noinspection removal
                         if (y > chunk.getHighestNonEmptySectionYOffset() + 15)
                         {
                             continue;
