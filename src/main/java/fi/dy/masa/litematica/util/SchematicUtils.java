@@ -78,7 +78,7 @@ public class SchematicUtils {
         if (area == null) return null;
 
         LitematicaSchematic.SchematicSaveInfo info = new LitematicaSchematic.SchematicSaveInfo(false, false, false, false);
-        LitematicaSchematic schematic = LitematicaSchematic.createEmptySchematic(area, author, true);
+        var pair = LitematicaSchematic.createEmptySchematic2(area, author, true);
 
         String worldName = MinecraftClient.getInstance().getServer().getSavePath(WorldSavePath.ROOT).getParent().getFileName().toString();
         File dir = new File(DataManager.getSchematicsBaseDirectory(), worldName);
@@ -88,12 +88,12 @@ public class SchematicUtils {
             i++;
         }
 
-        TaskSaveSchematic task = new TaskSaveSchematic(dir, i + "", schematic, area, info, false);
+        TaskSaveSchematic task = new TaskSaveSchematic(dir, i + "", pair.getLeft(), pair.getRight(), info, false);
         TaskScheduler.getServerInstanceIfExistsOrClient().scheduleTask(task, 10);
 
-        schematic.setSchematicFile(new File(dir, i + LitematicaSchematic.FILE_EXTENSION));
+        pair.getLeft().setSchematicFile(new File(dir, i + LitematicaSchematic.FILE_EXTENSION));
 
-        return schematic;
+        return pair.getLeft();
     }
 
     public static boolean saveSchematic(boolean inMemoryOnly) {

@@ -357,6 +357,8 @@ public class KeyCallbacks {
                 SchematicPlacement placement = SchematicPlacement.createFor(schematic, BlockPos.ORIGIN, schematic.getMetadata().getName(), true, true);
                 placement.moveSubRegionTo("content", selection.getSubRegionBox(selection.getCurrentSubRegionBoxName()).getPos1(), System.out::println);
 
+                placement.toggleSubRegionEnabled("context", null);
+
                 DataManager.getSchematicPlacementManager().addSchematicPlacement(
                         placement,
                         false

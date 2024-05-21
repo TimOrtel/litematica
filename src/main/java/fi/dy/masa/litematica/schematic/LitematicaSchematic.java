@@ -13,6 +13,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableMap;
+import fi.dy.masa.litematica.data.DataManager;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 
 import net.minecraft.SharedConstants;
@@ -40,6 +41,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.BlockMirror;
 import net.minecraft.util.BlockRotation;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.ChunkSectionPos;
@@ -230,6 +232,10 @@ public class LitematicaSchematic {
      * @return
      */
     public static LitematicaSchematic createEmptySchematic(AreaSelection area, String author, boolean includeContext) {
+        return createEmptySchematic2(area, author, includeContext).getLeft();
+    }
+
+    public static Pair<LitematicaSchematic, AreaSelection> createEmptySchematic2(AreaSelection area, String author, boolean includeContext) {
         var primaryBox = area.getAllSubRegions().values().stream().toList().get(0);
         primaryBox.setName("content");
 
@@ -244,8 +250,9 @@ public class LitematicaSchematic {
         var centerZ = Math.min(p1z, p2z) + Math.abs(p1z - p2z) / 2;
         var centerY = Math.min(p1y, p2y) + Math.abs(p1y - p2y) / 2;
 
-        var centerPos1 = new BlockPos(centerX - 100, centerY - 100, centerZ - 100);
-        var centerPos2 = new BlockPos(centerX + 100, centerY + 100, centerZ + 100);
+        int i = 32;
+        var centerPos1 = new BlockPos(centerX - i, centerY - i, centerZ - i);
+        var centerPos2 = new BlockPos(centerX + i, centerY + i, centerZ + i);
 
         var contextBox = new Box(centerPos1, centerPos2, "context");
 
@@ -288,7 +295,7 @@ public class LitematicaSchematic {
             schematic.pendingFluidTicks.put(regionName, new HashMap<>());
         }
 
-        return schematic;
+        return new Pair<>(schematic, newArea);
     }
 
     public void takeEntityDataFromSchematicaSchematic(SchematicaSchematic schematic, String subRegionName) {

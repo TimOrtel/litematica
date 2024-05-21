@@ -141,8 +141,8 @@ public class GuiSchematicSave extends GuiSchematicSaveBase implements ICompletio
                         boolean includeSupportBlocks = this.gui.checkboxIncludeSupportBlocks.isChecked();
                         boolean fromSchematicWorld = this.gui.checkboxSaveFromSchematicWorld.isChecked();
                         LitematicaSchematic.SchematicSaveInfo info = new LitematicaSchematic.SchematicSaveInfo(visibleOnly, includeSupportBlocks, ignoreEntities, fromSchematicWorld);
-                        LitematicaSchematic schematic = LitematicaSchematic.createEmptySchematic(area, author, true);
-                        TaskSaveSchematic task = new TaskSaveSchematic(dir, fileName, schematic, area, info, overwrite);
+                        var f = LitematicaSchematic.createEmptySchematic2(area, author, true);
+                        TaskSaveSchematic task = new TaskSaveSchematic(dir, fileName, f.getLeft(), f.getRight(), info, overwrite);
                         task.setCompletionListener(this.gui);
                         TaskScheduler.getServerInstanceIfExistsOrClient().scheduleTask(task, 10);
                         this.gui.addMessage(MessageType.INFO, "litematica.message.schematic_save_task_created");
